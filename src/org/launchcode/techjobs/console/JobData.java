@@ -8,6 +8,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -46,23 +47,26 @@ public class JobData {
         return values;
     }
 
+
+
+
     public static ArrayList<HashMap<String, String>> findAll() {
 
         // load data, if not already loaded
         loadData();
 
-        return allJobs;
+        return (ArrayList<HashMap<String, String>>)allJobs.clone();
     }
 
     /**
      * Returns results of search the jobs data by key/value, using
      * inclusion of the search term.
-     *
+     * <p>
      * For example, searching for employer "Enterprise" will include results
      * with "Enterprise Holdings, Inc".
      *
-     * @param column   Column that should be searched.
-     * @param value Value of teh field to search for
+     * @param column Column that should be searched.
+     * @param value  Value of teh field to search for
      * @return List of all jobs matching the criteria
      */
     public static ArrayList<HashMap<String, String>> findByColumnAndValue(String column, String value) {
@@ -76,10 +80,44 @@ public class JobData {
 
             String aValue = row.get(column);
 
-            if (aValue.contains(value)) {
+            if (aValue.toLowerCase().contains(value.toLowerCase())) {
                 jobs.add(row);
             }
         }
+
+        jobs.sort(Comparator.comparing(m -> m.get("position type"), Comparator.nullsLast(Comparator.naturalOrder())));
+
+        return jobs;
+    }
+
+    /**
+     * Returns results of search the jobs data by value, using
+     * inclusion of the search term.
+     *
+     * For example, searching for employer "Ruby" will include results
+     * for every single job with the match "Ruby".
+     *
+     * @param value  Value of teh field to search for
+     * @return List of all jobs matching the criteria
+     */
+
+    public static ArrayList<HashMap<String, String>> findByValue(String value) {
+
+        // load data, if not already loaded
+        loadData();
+
+        ArrayList<HashMap<String, String>> jobs = new ArrayList<>();
+
+        for (HashMap<String, String> job : allJobs) {
+            if (job.values().stream().anyMatch(item -> item.toLowerCase().contains(value.toLowerCase())))
+                if (jobs.size() == 0)
+                    jobs.add(job);
+                else
+                    if(!jobs.contains(job))
+                        jobs.add(job);
+        }
+
+        jobs.sort(Comparator.comparing(m -> m.get("position type"), Comparator.nullsLast(Comparator.naturalOrder())));
 
         return jobs;
     }
